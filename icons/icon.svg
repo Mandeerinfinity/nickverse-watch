@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#0b3d57"/><stop offset=".6" stop-color="#04121d"/><stop offset="1" stop-color="#01060b"/></radialGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#bff8ff"/><stop offset="1" stop-color="#4de8ff" stop-opacity="0"/></radialGradient>
+    <filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill="none" stroke="#4de8ff" filter="url(#g)">
+    <circle cx="256" cy="256" r="196" stroke-width="10" opacity=".5"/>
+    <circle cx="256" cy="256" r="168" stroke-width="5" stroke-dasharray="14 18"/>
+    <path d="M256 60 A196 196 0 0 1 452 256" stroke="#bff8ff" stroke-width="14" stroke-linecap="round"/>
+    <polygon points="256,126 368,191 368,321 256,386 144,321 144,191" stroke-width="16" stroke-linejoin="round"/>
+    <path d="M206 312V200l100 112V200" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <circle cx="256" cy="256" r="60" fill="url(#core)" opacity=".35"/>
+</svg>

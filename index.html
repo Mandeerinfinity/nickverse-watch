@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NICK-VERSE Watch</title>
+<meta name="description" content="NICK-VERSE Watch — a heads-up-display chronometer. A CINCO Corporation Product.">
+<meta name="theme-color" content="#03101a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="arc">
+
+<!-- Ambient layers -->
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+<div class="bg-wrap" aria-hidden="true"><div class="bg-glow"></div><div class="bg-grid"></div></div>
+<div class="fx-scanlines" aria-hidden="true"></div>
+<div class="fx-scanbar" aria-hidden="true"></div>
+<div class="fx-vignette" aria-hidden="true"></div>
+
+<!-- Boot sequence -->
+<div id="boot" aria-hidden="true">
+  <div class="boot-inner">
+    <svg class="boot-mark" viewBox="0 0 100 100"><use href="#nv-mark"/></svg>
+    <div class="boot-title">NICK-VERSE <span>OS</span></div>
+    <div class="boot-lines" id="boot-lines"></div>
+    <div class="boot-bar"><i id="boot-progress"></i></div>
+    <div class="boot-skip">click anywhere to skip</div>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="nv-mark" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/>
+      <circle cx="50" cy="50" r="37" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 5"/>
+      <polygon points="50,20 76,35 76,65 50,80 24,65 24,35" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M38 64V36l24 28V36" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="app">
+  <!-- Top bar -->
+  <header class="topbar glass">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 100 100"><use href="#nv-mark"/></svg>
+      <div class="brand-text">
+        <div class="brand-name">NICK<span>-</span>VERSE</div>
+        <div class="brand-sub">WATCH // HUD CHRONOMETER <em>v5.0</em></div>
+      </div>
+    </div>
+    <div class="top-status">
+      <div class="chip" id="chip-theme" title="Active face theme"><i class="dot"></i><span id="theme-name">ARC REACTOR</span></div>
+      <div class="chip mono" id="chip-timer" hidden title="Active countdown"><i class="dot warn"></i><span id="chip-timer-text">T-00:00</span></div>
+      <div class="chip mono" id="chip-focus" hidden title="Focus session"><i class="dot"></i><span id="chip-focus-text">FOCUS</span></div>
+    </div>
+    <nav class="top-actions">
+      <button class="icon-btn" id="btn-hour" title="Toggle 12/24h (H)"><span class="txt" id="hour-label">12H</span></button>
+      <button class="icon-btn" id="btn-chime" title="Hourly chime (C)" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6zm-2 15a2 2 0 0 0 4 0"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-theme" title="Cycle theme (T)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" class="fill"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-help" title="Keyboard shortcuts (?)"><span class="txt">?</span></button>
+      <button class="icon-btn" id="btn-settings" title="Settings (S)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-fullscreen" title="Fullscreen (F)">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: HUD -->
+    <aside class="col col-left">
+      <section class="panel glass hud-status" aria-label="System status">
+        <header class="panel-head"><span class="ph-idx">01</span><h2>System Status</h2><span class="ph-live"><i></i>LIVE</span></header>
+        <div class="status-grid">
+          <div class="stat">
+            <div class="stat-label">Power Cell</div>
+            <div class="stat-val mono" id="st-battery">--</div>
+            <div class="meter"><i id="st-battery-bar"></i></div>
+            <div class="stat-note" id="st-battery-note">Querying…</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Uplink</div>
+            <div class="stat-val mono" id="st-net">--</div>
+            <div class="meter"><i id="st-net-bar"></i></div>
+            <div class="stat-note" id="st-net-note">--</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Render</div>
+            <div class="stat-val mono" id="st-fps">-- FPS</div>
+            <div class="spark"><canvas id="st-spark" width="160" height="28"></canvas></div>
+            <div class="stat-note" id="st-dpr">--</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Session</div>
+            <div class="stat-val mono" id="st-uptime">00:00:00</div>
+            <div class="meter pulse"><i style="width:100%"></i></div>
+            <div class="stat-note" id="st-tz">--</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel glass hud-day" aria-label="Day progress">
+        <header class="panel-head"><span class="ph-idx">02</span><h2>Solar Track</h2><span class="ph-sub mono" id="day-pct">--%</span></header>
+        <svg class="day-arc" viewBox="0 0 300 150" id="day-arc">
+          <defs>
+            <linearGradient id="dayGrad" x1="0" x2="1">
+              <stop offset="0" class="g-a"/><stop offset=".5" class="g-b"/><stop offset="1" class="g-a"/>
+            </linearGradient>
+            <filter id="sunGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4"/></filter>
+          </defs>
+          <line x1="10" y1="128" x2="290" y2="128" class="horizon"/>
+          <path d="M30 128 A120 110 0 0 1 270 128" class="arc-track"/>
+          <path d="M30 128 A120 110 0 0 1 270 128" class="arc-fill" id="day-arc-fill"/>
+          <g id="day-ticks"></g>
+          <g id="sun-g">
+            <circle r="13" class="sun-halo" filter="url(#sunGlow)"/>
+            <circle r="7" class="sun-core"/>
+          </g>
+          <text x="30" y="145" class="arc-lbl" id="sunrise-lbl">--:--</text>
+          <text x="270" y="145" class="arc-lbl end" id="sunset-lbl">--:--</text>
+          <text x="150" y="112" class="arc-mid" id="day-state">--</text>
+        </svg>
+        <div class="day-row">
+          <div><span class="k">Daylight</span><span class="v mono" id="daylight-left">--</span></div>
+          <div><span class="k">Day length</span><span class="v mono" id="day-length">--</span></div>
+          <div><span class="k">Moon</span><span class="v" id="moon-phase">--</span></div>
+        </div>
+        <div class="day-bar"><i id="day-bar"></i><span class="mono" id="day-bar-lbl">DAY 000 · 00.0%</span></div>
+      </section>
+      <button class="panel glass cinco-ad" id="cinco-ad" aria-label="CINCO advertisement — tap for details">
+        <div class="ad-top"><span class="ad-badge">AD</span><span class="c5">CINCO</span><span class="ad-sponsor mono">SPONSORED TRANSMISSION</span></div>
+        <div class="ad-body" id="ad-body">
+          <div class="ad-icon" id="ad-icon">🥪</div>
+          <div class="ad-copy">
+            <div class="ad-also">Also try the</div>
+            <div class="ad-name" id="ad-name">CINCO Fwip Auto-Sandwich</div>
+            <div class="ad-line" id="ad-line">Lunch, now with less you.</div>
+          </div>
+        </div>
+        <div class="ad-foot"><span class="ad-cta">Tap to learn more ›</span><span class="ad-dots" id="ad-dots"></span></div>
+      </button>
+    </aside>
+
+    <!-- CENTER: Watch -->
+    <section class="col col-center" aria-label="Watch face">
+      <div class="watch-stage" id="watch-stage">
+        <div class="watch-halo" aria-hidden="true"></div>
+        <div class="watch-orbit o1" aria-hidden="true"></div>
+        <div class="watch-orbit o2" aria-hidden="true"></div>
+        <div class="watch" id="watch">
+          <canvas id="face" role="img" aria-label="Analog watch face"></canvas>
+        </div>
+      </div>
+      <div class="digital" id="digital">
+        <div class="d-time"><span id="d-hm">--:--</span><span class="d-sec" id="d-sec">--</span><span class="d-ampm" id="d-ampm">--</span></div>
+        <div class="d-date"><span id="d-dow">---</span><i></i><span id="d-date">--- --, ----</span></div>
+      </div>
+      <div class="theme-switcher" id="theme-switcher" role="radiogroup" aria-label="Face theme"></div>
+      <div class="cinco-stamp" aria-label="A CINCO Corporation product">
+        <div class="cinco-logo"><span class="c5">CINCO</span><span class="corp">Corporation</span></div>
+        <div class="cinco-tag">Time, Now With More Time.<sup>™</sup></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Modules -->
+    <section class="col col-right">
+      <nav class="tabs glass" id="tabs" role="tablist">
+        <button role="tab" data-tab="stopwatch" class="active"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 14V10M10 3h4M12 3v4"/></svg><span>Stopwatch</span><kbd>1</kbd></button>
+        <button role="tab" data-tab="timer"><svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/></svg><span>Timer</span><kbd>2</kbd></button>
+        <button role="tab" data-tab="alarms"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M4 5l3-2M20 5l-3-2"/></svg><span>Alarms</span><kbd>3</kbd></button>
+        <button role="tab" data-tab="world"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span>World</span><kbd>4</kbd></button>
+        <button role="tab" data-tab="focus"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" class="fill"/></svg><span>Focus</span><kbd>5</kbd></button>
+        <button role="tab" data-tab="jarvis"><svg viewBox="0 0 24 24"><path d="M4 12h2l2-5 3 10 3-8 2 3h4"/></svg><span>J.A.R.V.I.S.</span><kbd>6</kbd></button>
+      </nav>
+
+      <div class="panels">
+        <!-- STOPWATCH -->
+        <section class="panel glass tab-panel active" data-panel="stopwatch" role="tabpanel">
+          <header class="panel-head"><span class="ph-idx">SW</span><h2>Stopwatch</h2><span class="ph-sub mono" id="sw-state">STANDBY</span></header>
+          <div class="sw-dial">
+            <svg viewBox="0 0 200 200" class="ring-svg">
+              <circle cx="100" cy="100" r="88" class="ring-bg"/>
+              <g id="sw-ticks"></g>
+              <circle cx="100" cy="100" r="88" class="ring-fg" id="sw-ring" pathLength="100"/>
+              <circle cx="100" cy="100" r="74" class="ring-bg thin"/>
+              <circle cx="100" cy="100" r="74" class="ring-fg thin alt" id="sw-ring2" pathLength="100"/>
+            </svg>
+            <div class="dial-readout">
+              <div class="big mono" id="sw-main">00:00<span>.00</span></div>
+              <div class="small mono" id="sw-lapnow">LAP 01 · 00:00.00</div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn ghost" id="sw-lap" disabled>Lap</button>
+            <button class="btn primary" id="sw-start">Start</button>
+            <button class="btn ghost" id="sw-reset" disabled>Reset</button>
+          </div>
+          <div class="list-head mono"><span>#</span><span>Lap</span><span>Split</span></div>
+          <ol class="lap-list" id="sw-laps"><li class="empty">No laps recorded, Sir.</li></ol>
+        </section>
+
+        <!-- TIMER -->
+        <section class="panel glass tab-panel" data-panel="timer" role="tabpanel">
+          <header class="panel-head"><span class="ph-idx">TM</span><h2>Countdown</h2><span class="ph-sub mono" id="tm-state">STANDBY</span></header>
+          <div class="sw-dial">
+            <svg viewBox="0 0 200 200" class="ring-svg">
+              <circle cx="100" cy="100" r="88" class="ring-bg"/>
+              <g id="tm-ticks"></g>
+              <circle cx="100" cy="100" r="88" class="ring-fg" id="tm-ring" pathLength="100"/>
+            </svg>
+            <div class="dial-readout">
+              <div class="tm-inputs" id="tm-inputs">
+                <label><input type="number" min="0" max="99" value="0" id="tm-h" inputmode="numeric"><span>H</span></label><b>:</b>
+                <label><input type="number" min="0" max="59" value="5" id="tm-m" inputmode="numeric"><span>M</span></label><b>:</b>
+                <label><input type="number" min="0" max="59" value="0" id="tm-s" inputmode="numeric"><span>S</span></label>
+              </div>
+              <div class="big mono" id="tm-main" hidden>00:05:00</div>
+              <div class="small mono" id="tm-end">ENDS --:--</div>
+            </div>
+          </div>
+          <div class="presets" id="tm-presets"></div>
+          <div class="btn-row">
+            <button class="btn ghost" id="tm-add">+1 min</button>
+            <button class="btn primary" id="tm-start">Start</button>
+            <button class="btn ghost" id="tm-reset" disabled>Reset</button>
+          </div>
+        </section>
+
+        <!-- ALARMS -->
+        <section class="panel glass tab-panel" data-panel="alarms" role="tabpanel">
+          <header class="panel-head"><span class="ph-idx">AL</span><h2>Alarms</h2><span class="ph-sub mono" id="al-next">NO ALARMS ARMED</span></header>
+          <form class="alarm-form" id="al-form" autocomplete="off">
+            <input type="time" id="al-time" required value="07:00" aria-label="Alarm time">
+            <input type="text" id="al-label" maxlength="40" placeholder="Label (e.g. Suit up)" aria-label="Alarm label">
+            <div class="days" id="al-days" role="group" aria-label="Repeat days"></div>
+            <button class="btn primary" type="submit">Arm Alarm</button>
+          </form>
+          <ul class="alarm-list" id="al-list"></ul>
+          <div class="hint">Alarms fire while this page is open. Keep a tab alive, Sir.</div>
+        </section>
+
+        <!-- WORLD -->
+        <section class="panel glass tab-panel" data-panel="world" role="tabpanel">
+          <header class="panel-head"><span class="ph-idx">WC</span><h2>World Clocks</h2><span class="ph-sub mono" id="wc-local">LOCAL</span></header>
+          <div class="world-add">
+            <select id="wc-select" aria-label="Choose a city"></select>
+            <button class="btn primary" id="wc-add">Add</button>
+          </div>
+          <ul class="world-list" id="wc-list"></ul>
+        </section>
+
+        <!-- FOCUS -->
+        <section class="panel glass tab-panel" data-panel="focus" role="tabpanel">
+          <header class="panel-head"><span class="ph-idx">FX</span><h2>Focus Protocol</h2><span class="ph-sub mono" id="fc-state">READY</span></header>
+          <div class="sw-dial">
+            <svg viewBox="0 0 200 200" class="ring-svg">
+              <circle cx="100" cy="100" r="88" class="ring-bg"/>
+              <g id="fc-ticks"></g>
+              <circle cx="100" cy="100" r="88" class="ring-fg" id="fc-ring" pathLength="100"/>
+            </svg>
+            <div class="dial-readout">
+              <div class="phase" id="fc-phase">DEEP WORK</div>
+              <div class="big mono" id="fc-main">25:00</div>
+              <div class="cycle-dots" id="fc-dots"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="focus-cfg">
+            <label>Work <input type="number" id="fc-work" min="1" max="120" value="25"> min</label>
+            <label>Break <input type="number" id="fc-break" min="1" max="60" value="5"> min</label>
+            <label>Long <input type="number" id="fc-long" min="1" max="60" value="15"> min</label>
+          </div>
+          <div class="btn-row">
+            <button class="btn ghost" id="fc-skip">Skip</button>
+            <button class="btn primary" id="fc-start">Engage</button>
+            <button class="btn ghost" id="fc-reset">Reset</button>
+          </div>
+          <div class="hint" id="fc-stats">Sessions completed today: 0</div>
+        </section>
+
+        <!-- JARVIS -->
+        <section class="panel glass tab-panel" data-panel="jarvis" role="tabpanel">
+          <header class="panel-head"><span class="ph-idx">AI</span><h2>J.A.R.V.I.S.</h2><span class="ph-sub mono" id="jv-state">ONLINE</span></header>
+          <button class="jarvis-orb" id="jv-orb" title="Click to hear the time (J)">
+            <canvas id="jv-canvas"></canvas>
+            <span class="orb-label">TAP FOR TIME</span>
+          </button>
+          <div class="jarvis-log" id="jv-log" aria-live="polite"></div>
+          <div class="btn-row wrap">
+            <button class="btn primary" id="jv-time">Speak Time</button>
+            <button class="btn ghost" id="jv-status">Status Report</button>
+            <button class="btn ghost" id="jv-quip">Wit, Please</button>
+          </div>
+          <div class="hint" id="jv-voice">Voice: detecting…</div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="cinco-foot">
+      <span class="c5">CINCO</span> <span>A CINCO Corporation Product</span>
+      <i></i><span>Model: CINCO Nick-Verse Chrono-Fwip 5000</span>
+      <i></i><span>CINCO: Time, Now With More Time.™</span>
+      <i></i><span class="fine">Warranty void if worn, looked at, or used to tell time.</span>
+    </div>
+    <div class="foot-meta mono"><span>NICK-VERSE © Nick</span><i></i><span>Press <kbd>?</kbd> for shortcuts</span></div>
+  </footer>
+</div>
+
+<!-- Settings drawer -->
+<aside class="drawer glass" id="settings" aria-hidden="true" aria-label="Settings">
+  <header class="panel-head"><span class="ph-idx">CFG</span><h2>Settings</h2><button class="icon-btn sm" data-close="settings" title="Close">✕</button></header>
+  <div class="set-group">
+    <h3>Face Theme</h3>
+    <div class="theme-cards" id="theme-cards"></div>
+  </div>
+  <div class="set-group">
+    <h3>Chronometry</h3>
+    <label class="switch"><input type="checkbox" id="set-24h"><i></i>24-hour display</label>
+    <label class="switch"><input type="checkbox" id="set-chime"><i></i>Hourly chime</label>
+    <label class="switch"><input type="checkbox" id="set-announce"><i></i>JARVIS announces the hour</label>
+    <label class="switch"><input type="checkbox" id="set-sweep" checked><i></i>Smooth sweeping second hand</label>
+  </div>
+  <div class="set-group">
+    <h3>Ambient Effects</h3>
+    <label class="switch"><input type="checkbox" id="set-particles" checked><i></i>Particle field</label>
+    <label class="switch"><input type="checkbox" id="set-scanlines" checked><i></i>Scanlines</label>
+    <label class="switch"><input type="checkbox" id="set-parallax" checked><i></i>Parallax (mouse / tilt)</label>
+    <label class="switch"><input type="checkbox" id="set-uisound" checked><i></i>Interface sounds</label>
+  </div>
+  <div class="set-group">
+    <h3>Voice</h3>
+    <select id="set-voice" aria-label="JARVIS voice"></select>
+    <div class="range-row"><span>Volume</span><input type="range" id="set-volume" min="0" max="1" step="0.05" value="0.7"></div>
+    <button class="btn ghost full" id="set-test">Test chime &amp; voice</button>
+  </div>
+  <div class="set-group">
+    <h3>Install</h3>
+    <button class="btn ghost full" id="set-install" disabled>Install as app</button>
+    <p class="hint">Works offline once loaded. <span id="sw-status"></span></p>
+  </div>
+  <p class="fine-print">CINCO Corporation is not responsible for time lost, gained, or rearranged. Contains 0% real vibranium. Not affiliated with any actual billionaire.</p>
+</aside>
+
+<!-- Help overlay -->
+<div class="modal" id="help" aria-hidden="true">
+  <div class="modal-card glass">
+    <header class="panel-head"><span class="ph-idx">KB</span><h2>Keyboard Shortcuts</h2><button class="icon-btn sm" data-close="help">✕</button></header>
+    <div class="kb-grid">
+      <div><kbd>1</kbd>–<kbd>6</kbd><span>Switch module</span></div>
+      <div><kbd>Space</kbd><span>Start / pause (active module)</span></div>
+      <div><kbd>L</kbd><span>Stopwatch lap</span></div>
+      <div><kbd>R</kbd><span>Reset active module</span></div>
+      <div><kbd>T</kbd><span>Cycle face theme</span></div>
+      <div><kbd>H</kbd><span>12 / 24-hour</span></div>
+      <div><kbd>J</kbd><span>JARVIS: speak the time</span></div>
+      <div><kbd>C</kbd><span>Hourly chime on / off</span></div>
+      <div><kbd>F</kbd><span>Fullscreen</span></div>
+      <div><kbd>S</kbd><span>Settings</span></div>
+      <div><kbd>?</kbd><span>This panel</span></div>
+      <div><kbd>Esc</kbd><span>Close / dismiss alarm</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Alarm alert -->
+<div class="modal alert" id="alert" aria-hidden="true" role="alertdialog" aria-labelledby="alert-title">
+  <div class="alert-card glass">
+    <div class="alert-rings"><i></i><i></i><i></i></div>
+    <div class="alert-kicker mono" id="alert-kicker">ALARM</div>
+    <div class="alert-time mono" id="alert-time">07:00</div>
+    <div class="alert-title" id="alert-title">Wake up, Sir</div>
+    <div class="btn-row">
+      <button class="btn ghost" id="alert-snooze">Snooze 5 min</button>
+      <button class="btn primary danger" id="alert-dismiss">Dismiss</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- CINCO infomercial -->
+<div class="modal infomercial" id="promo" aria-hidden="true" role="dialog" aria-labelledby="promo-name">
+  <div class="promo-card glass">
+    <div class="promo-burst mono">AS SEEN ON TV*</div>
+    <button class="icon-btn sm promo-close" data-close="promo" title="Close">✕</button>
+    <div class="promo-hero">
+      <div class="promo-icon" id="promo-icon">🥪</div>
+      <div class="promo-rays" aria-hidden="true"></div>
+    </div>
+    <div class="promo-kicker"><span class="c5">CINCO</span> PRESENTS</div>
+    <h2 class="promo-name" id="promo-name">CINCO Fwip Auto-Sandwich</h2>
+    <p class="promo-tag" id="promo-tag">—</p>
+    <ul class="promo-feats" id="promo-feats"></ul>
+    <div class="promo-price">
+      <div class="was mono">WAS <s id="promo-was">$∞</s></div>
+      <div class="now"><span id="promo-price">$19.95</span></div>
+      <div class="plus" id="promo-plus">plus shipping, handling, and emotional damages</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn ghost" data-close="promo">No thanks, I hate joy</button>
+      <button class="btn primary buy" id="promo-buy">BUY NOW</button>
+    </div>
+    <div class="promo-result mono" id="promo-result" hidden></div>
+    <p class="promo-fine" id="promo-fine">—</p>
+    <p class="promo-fine tiny">*Not seen on TV. Parody. Nothing is sold, charged, shipped, or linked. CINCO is fictional. Probably.</p>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/background.js"></script>
+<script src="js/face.js"></script>
+<script src="js/jarvis.js"></script>
+<script src="js/modules.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
